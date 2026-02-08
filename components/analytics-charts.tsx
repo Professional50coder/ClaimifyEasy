@@ -38,21 +38,21 @@ const formatINR = (n: number) =>
 
 type Claim = {
   id: string
-  policyId?: string
-  claimantName: string
-  hospitalName: string
-  insurerName: string
+  patientId?: string
   diagnosis: string
   amount: number
-  status: "NEW" | "SUBMITTED" | "VERIFIED" | "APPROVED" | "REJECTED" | "SETTLED"
-  createdAt: string | Date
-  settledAt?: string | Date | null
+  notes?: string
+  status: "submitted" | "under_review" | "approved" | "settled" | "rejected"
+  hospitalVerified?: boolean
+  insurerDecision?: "approved" | "rejected"
+  createdAt: number
+  updatedAt: number
 }
 
-const STATUS_ORDER: Claim["status"][] = ["NEW", "SUBMITTED", "VERIFIED", "APPROVED", "REJECTED", "SETTLED"]
+const STATUS_ORDER: Claim["status"][] = ["submitted", "under_review", "approved", "rejected", "settled"]
 
-function toDate(d: string | Date) {
-  return typeof d === "string" ? new Date(d) : d
+function toDate(d: number) {
+  return new Date(d)
 }
 
 function monthKey(d: Date) {
@@ -69,7 +69,6 @@ export function AnalyticsCharts({ claims }: { claims: Claim[] }) {
       (claims || []).map((c) => ({
         ...c,
         createdAt: toDate(c.createdAt),
-        settledAt: c.settledAt ? toDate(c.settledAt) : null,
       })),
     [claims],
   )
@@ -91,18 +90,17 @@ export function AnalyticsCharts({ claims }: { claims: Claim[] }) {
       string,
       {
         month: string
-        NEW: number
-        SUBMITTED: number
-        VERIFIED: number
-        APPROVED: number
-        REJECTED: number
-        SETTLED: number
+        submitted: number
+        under_review: number
+        approved: number
+        rejected: number
+        settled: number
       }
     >()
     for (const c of normalized) {
       const mk = monthKey(c.createdAt as Date)
       if (!m.has(mk)) {
-        m.set(mk, { month: mk, NEW: 0, SUBMITTED: 0, VERIFIED: 0, APPROVED: 0, REJECTED: 0, SETTLED: 0 })
+        m.set(mk, { month: mk, submitted: 0, under_review: 0, approved: 0, rejected: 0, settled: 0 })
       }
       const row = m.get(mk)!
       row[c.status]++
@@ -114,16 +112,18 @@ export function AnalyticsCharts({ claims }: { claims: Claim[] }) {
   const diagnosisMix = useMemo(() => {
     const map = new Map<string, number>()
     for (const c of normalized) {
-      map.set(c.diagnosis, (map.get(c.diagnosis) || 0) + 1)
+      const diagnosis = c.diagnosis || "Unknown"
+      map.set(diagnosis, (map.get(diagnosis) || 0) + 1)
     }
     return [...map.entries()].map(([name, value]) => ({ name, value }))
   }, [normalized])
 
-  // 4) Top hospitals by total amount (Bar)
-  const topHospitals = useMemo(() => {
+  // 4) Top diagnoses by total amount (Bar)
+  const topDiagnoses = useMemo(() => {
     const map = new Map<string, number>()
     for (const c of normalized) {
-      map.set(c.hospitalName, (map.get(c.hospitalName) || 0) + (c.amount || 0))
+      const diagnosis = c.diagnosis || "Unknown"
+      map.set(diagnosis, (map.get(diagnosis) || 0) + (c.amount || 0))
     }
     const arr = [...map.entries()].map(([name, total]) => ({ name, total }))
     arr.sort((a, b) => b.total - a.total)
@@ -134,11 +134,11 @@ export function AnalyticsCharts({ claims }: { claims: Claim[] }) {
   const avgSettlementDays = useMemo(() => {
     const map = new Map<string, { month: string; sum: number; n: number }>()
     for (const c of normalized) {
-      if (c.status === "SETTLED" && c.settledAt) {
+      if (c.status === "settled" || c.status === "approved") {
         const created = c.createdAt as Date
-        const settled = c.settledAt as Date
-        const days = Math.max(0, (settled.getTime() - created.getTime()) / (1000 * 60 * 60 * 24))
-        const mk = monthKey(settled)
+        const updated = toDate(c.updatedAt)
+        const days = Math.max(0, (updated.getTime() - created.getTime()) / (1000 * 60 * 60 * 24))
+        const mk = monthKey(updated)
         const row = map.get(mk) || { month: mk, sum: 0, n: 0 }
         row.sum += days
         row.n += 1
@@ -166,6 +166,18 @@ export function AnalyticsCharts({ claims }: { claims: Claim[] }) {
       if (idx >= 0) res[idx].count++
     }
     return res
+  }, [normalized])
+
+  // 7) Top Hospitals by Amount (Bar)
+  const topHospitals = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const c of normalized) {
+      const hospital = c.patientId || "Unknown"
+      map.set(hospital, (map.get(hospital) || 0) + (c.amount || 0))
+    }
+    const arr = [...map.entries()].map(([name, total]) => ({ name, total }))
+    arr.sort((a, b) => b.total - a.total)
+    return arr.slice(0, 10)
   }, [normalized])
 
   const pieColors = [
@@ -218,38 +230,31 @@ export function AnalyticsCharts({ claims }: { claims: Claim[] }) {
             <YAxis allowDecimals={false} tickLine={false} stroke="#9ca3af" />
             <Tooltip content={<ChartTooltipContent />} />
             <Legend />
-            <Bar stackId="a" dataKey="NEW" fill={VIBRANT_COLORS.blue} animationDuration={700} radius={[4, 4, 0, 0]} />
+            <Bar stackId="a" dataKey="submitted" fill={VIBRANT_COLORS.blue} animationDuration={700} radius={[4, 4, 0, 0]} />
             <Bar
               stackId="a"
-              dataKey="SUBMITTED"
+              dataKey="under_review"
               fill={VIBRANT_COLORS.teal}
               animationDuration={700}
               radius={[4, 4, 0, 0]}
             />
             <Bar
               stackId="a"
-              dataKey="VERIFIED"
+              dataKey="approved"
               fill={VIBRANT_COLORS.green}
               animationDuration={700}
               radius={[4, 4, 0, 0]}
             />
             <Bar
               stackId="a"
-              dataKey="APPROVED"
-              fill={VIBRANT_COLORS.orange}
-              animationDuration={700}
-              radius={[4, 4, 0, 0]}
-            />
-            <Bar
-              stackId="a"
-              dataKey="REJECTED"
+              dataKey="rejected"
               fill={VIBRANT_COLORS.red}
               animationDuration={700}
               radius={[4, 4, 0, 0]}
             />
             <Bar
               stackId="a"
-              dataKey="SETTLED"
+              dataKey="settled"
               fill={VIBRANT_COLORS.purple}
               animationDuration={700}
               radius={[4, 4, 0, 0]}
@@ -285,11 +290,11 @@ export function AnalyticsCharts({ claims }: { claims: Claim[] }) {
         </ResponsiveContainer>
       </div>
 
-      {/* Top Hospitals - Horizontal Bar Chart */}
+      {/* Top Diagnoses - Horizontal Bar Chart */}
       <div className="rounded-lg border bg-card p-4 animate-fade-in delay-400">
-        <h3 className="mb-3 font-medium text-foreground">Top Hospitals by Amount</h3>
+        <h3 className="mb-3 font-medium text-foreground">Top Diagnoses by Amount</h3>
         <ResponsiveContainer width="100%" height={240}>
-          <BarChart data={topHospitals} layout="vertical">
+          <BarChart data={topDiagnoses} layout="vertical">
             <defs>
               <linearGradient id="barFillHosp" x1="0" x2="1" y1="0" y2="0">
                 <stop offset="0%" stopColor={VIBRANT_COLORS.orange} stopOpacity={0.8} />
