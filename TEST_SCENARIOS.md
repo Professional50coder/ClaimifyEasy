@@ -232,7 +232,7 @@ Each scenario validates specific integrations and features. Run through all scen
 - ✅ No uncaught exceptions
 - ✅ User-friendly error messages (if any)
 - ✅ App remains responsive
-- ✅ [v0] debug messages visible if needed
+- ✅ debug messages visible if needed
 
 **Test Passed If**: No critical errors, app handles issues gracefully
 
