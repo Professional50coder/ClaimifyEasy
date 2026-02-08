@@ -20,3 +20,7 @@ declare module "next/image" {
   const Image: React.ComponentType<any>
   export default Image
 }
+
+// Provide a minimal declaration to satisfy packages that reference the
+// 'date-fns' type library implicitly.
+declare module "date-fns"
