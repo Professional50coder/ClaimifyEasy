@@ -11,6 +11,8 @@
   "dependencies": {
     "@ai-sdk/google": "latest",
     "@ai-sdk/react": "latest",
+    "@ai-sdk/xai": "latest",
+    "elevenlabs": "latest",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "latest",
     "@radix-ui/react-alert-dialog": "latest",
