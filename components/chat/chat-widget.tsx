@@ -25,7 +25,7 @@ export function ChatWidget() {
         id: "welcome",
         role: "assistant",
         content:
-          "Hi! I'm your ClaimifyEasy assistant powered by Grok AI. I can help you with claim status, policy information, and general questions. What can I help you with today?",
+          "Hi! I'm your ClaimifyEasy assistant powered by Grok AI with Retrieval-Augmented Generation (RAG). I analyze your claim data and documents to provide personalized insights. I can help you with:\n\n• Claim status and tracking\n• Policy information\n• Settlement timelines\n• Document analysis\n• General platform questions\n\nWhat can I help you with today?",
       },
     ],
   })
@@ -115,7 +115,8 @@ export function ChatWidget() {
           {/* Header */}
           <div className="flex items-center justify-between border-b p-4 bg-primary text-white rounded-t-lg">
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold">Grok Assistant (xAI)</h3>
+              <h3 className="font-semibold">Grok Assistant (xAI) + RAG</h3>
+              <span className="text-xs bg-white/20 px-2 py-1 rounded-full">AI-Powered</span>
             </div>
             <div className="flex items-center gap-2">
               <button

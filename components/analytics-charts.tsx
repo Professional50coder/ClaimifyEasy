@@ -20,7 +20,6 @@ import {
   ReferenceLine,
 } from "recharts"
 import { useMemo } from "react"
-import { ChartTooltipContent } from "./ui/chart"
 
 const VIBRANT_COLORS = {
   blue: "#0066FF",
@@ -189,46 +188,69 @@ export function AnalyticsCharts({ claims }: { claims: Claim[] }) {
     VIBRANT_COLORS.purple,
   ]
 
+  // Error handling: check if we have data
+  const hasData = normalized && normalized.length > 0
+  
+  if (!hasData) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 px-4">
+        <div className="text-center">
+          <p className="text-muted-foreground text-lg">No claim data available</p>
+          <p className="text-sm text-muted-foreground mt-2">Claims data will appear here once submitted</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-      {/* Daily New Claims - Area Chart with Gradient */}
-      <div className="rounded-lg border bg-card p-4 animate-fade-in delay-100">
-        <h3 className="mb-3 font-medium text-foreground">Daily New Claims</h3>
-        <ResponsiveContainer width="100%" height={240}>
-          <AreaChart data={dailyNew}>
-            <defs>
-              <linearGradient id="areaFill" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor={VIBRANT_COLORS.blue} stopOpacity={0.4} />
-                <stop offset="100%" stopColor={VIBRANT_COLORS.blue} stopOpacity={0.05} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" opacity={0.2} stroke="#e5e7eb" />
-            <XAxis dataKey="date" tickLine={false} stroke="#9ca3af" />
-            <YAxis allowDecimals={false} tickLine={false} stroke="#9ca3af" />
-            <Tooltip content={<ChartTooltipContent labelKey="date" />} />
-            <Area
-              type="monotone"
-              dataKey="value"
-              stroke={VIBRANT_COLORS.blue}
-              fill="url(#areaFill)"
-              strokeWidth={3}
-              animationBegin={100}
-              animationDuration={800}
-            />
-            <Brush height={16} travellerWidth={8} fill={VIBRANT_COLORS.blue} />
-          </AreaChart>
-        </ResponsiveContainer>
+    <div className="space-y-10">
+      {/* Daily New Claims - Area Chart with Gradient - Full Width */}
+      <div className="rounded-lg border bg-card p-6 shadow-sm hover:shadow-md transition-shadow animate-fade-in delay-100">
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">Daily New Claims Trend</h3>
+            <p className="text-sm text-muted-foreground mt-1">Claims submitted each day</p>
+          </div>
+          <ResponsiveContainer width="100%" height={320}>
+            <AreaChart data={dailyNew}>
+              <defs>
+                <linearGradient id="areaFill" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stopColor={VIBRANT_COLORS.blue} stopOpacity={0.4} />
+                  <stop offset="100%" stopColor={VIBRANT_COLORS.blue} stopOpacity={0.05} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" opacity={0.2} stroke="#e5e7eb" />
+              <XAxis dataKey="date" tickLine={false} stroke="#9ca3af" />
+              <YAxis allowDecimals={false} tickLine={false} stroke="#9ca3af" />
+              <Tooltip contentStyle={{ backgroundColor: "rgba(0, 0, 0, 0.8)", border: "1px solid rgba(255, 255, 255, 0.2)", borderRadius: "8px", color: "#fff" }} />
+              <Area
+                type="monotone"
+                dataKey="value"
+                stroke={VIBRANT_COLORS.blue}
+                fill="url(#areaFill)"
+                strokeWidth={3}
+                animationBegin={100}
+                animationDuration={800}
+              />
+              <Brush height={16} travellerWidth={8} fill={VIBRANT_COLORS.blue} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
-      {/* Monthly Status Mix - Stacked Bar Chart */}
-      <div className="rounded-lg border bg-card p-4 animate-fade-in delay-200">
-        <h3 className="mb-3 font-medium text-foreground">Monthly Status Mix</h3>
-        <ResponsiveContainer width="100%" height={240}>
+      {/* Monthly Status Mix - Stacked Bar Chart - Full Width */}
+      <div className="rounded-lg border bg-card p-6 shadow-sm hover:shadow-md transition-shadow animate-fade-in delay-200">
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">Monthly Status Distribution</h3>
+            <p className="text-sm text-muted-foreground mt-1">Claims by status across months</p>
+          </div>
+          <ResponsiveContainer width="100%" height={320}>
           <BarChart data={monthlyStatus}>
             <CartesianGrid strokeDasharray="3 3" opacity={0.2} stroke="#e5e7eb" />
             <XAxis dataKey="month" tickLine={false} stroke="#9ca3af" />
             <YAxis allowDecimals={false} tickLine={false} stroke="#9ca3af" />
-            <Tooltip content={<ChartTooltipContent />} />
+            <Tooltip contentStyle={{ backgroundColor: "rgba(0, 0, 0, 0.8)", border: "1px solid rgba(255, 255, 255, 0.2)", borderRadius: "8px", color: "#fff" }} />
             <Legend />
             <Bar stackId="a" dataKey="submitted" fill={VIBRANT_COLORS.blue} animationDuration={700} radius={[4, 4, 0, 0]} />
             <Bar
@@ -261,76 +283,94 @@ export function AnalyticsCharts({ claims }: { claims: Claim[] }) {
             />
             <Brush height={16} travellerWidth={8} fill={VIBRANT_COLORS.teal} />
           </BarChart>
-        </ResponsiveContainer>
+          </ResponsiveContainer>
+        </div>
       </div>
 
-      {/* Diagnosis Mix - Donut Chart */}
-      <div className="rounded-lg border bg-card p-4 animate-fade-in delay-300">
-        <h3 className="mb-3 font-medium text-foreground">Diagnosis Mix</h3>
-        <ResponsiveContainer width="100%" height={240}>
-          <PieChart>
-            <Tooltip content={<ChartTooltipContent />} />
-            <Legend />
-            <Pie
-              data={diagnosisMix}
-              dataKey="value"
-              nameKey="name"
-              innerRadius={50}
-              outerRadius={80}
-              paddingAngle={2}
-              animationDuration={600}
-              label
-              labelLine={false}
-            >
-              {diagnosisMix.map((_, idx) => (
-                <Cell key={idx} fill={pieColors[idx % pieColors.length]} />
-              ))}
-            </Pie>
-          </PieChart>
-        </ResponsiveContainer>
+      {/* Two-Column Section for Diagnosis Mix and Top Diagnoses */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Diagnosis Mix - Donut Chart */}
+        <div className="rounded-lg border bg-card p-6 shadow-sm hover:shadow-md transition-shadow animate-fade-in delay-300">
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-lg font-semibold text-foreground">Diagnosis Distribution</h3>
+              <p className="text-sm text-muted-foreground mt-1">Claims by diagnosis type</p>
+            </div>
+            <ResponsiveContainer width="100%" height={320}>
+              <PieChart>
+                <Tooltip contentStyle={{ backgroundColor: "rgba(0, 0, 0, 0.8)", border: "1px solid rgba(255, 255, 255, 0.2)", borderRadius: "8px", color: "#fff" }} />
+                <Legend />
+                <Pie
+                  data={diagnosisMix}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={50}
+                  outerRadius={80}
+                  paddingAngle={2}
+                  animationDuration={600}
+                  label
+                  labelLine={false}
+                >
+                  {diagnosisMix.map((_, idx) => (
+                    <Cell key={idx} fill={pieColors[idx % pieColors.length]} />
+                  ))}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Top Diagnoses - Horizontal Bar Chart */}
+        <div className="rounded-lg border bg-card p-6 shadow-sm hover:shadow-md transition-shadow animate-fade-in delay-400">
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-lg font-semibold text-foreground">Top Diagnoses by Amount</h3>
+              <p className="text-sm text-muted-foreground mt-1">Total claim amount per diagnosis</p>
+            </div>
+            <ResponsiveContainer width="100%" height={320}>
+              <BarChart data={topDiagnoses} layout="vertical">
+                <defs>
+                  <linearGradient id="barFillHosp" x1="0" x2="1" y1="0" y2="0">
+                    <stop offset="0%" stopColor={VIBRANT_COLORS.orange} stopOpacity={0.8} />
+                    <stop offset="100%" stopColor={VIBRANT_COLORS.red} stopOpacity={0.6} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.2} stroke="#e5e7eb" />
+                <XAxis
+                  type="number"
+                  tickFormatter={(v) => formatINR(v).replace("₹", "")}
+                  tickLine={false}
+                  stroke="#9ca3af"
+                />
+                <YAxis dataKey="name" type="category" tickLine={false} stroke="#9ca3af" width={80} />
+                <Tooltip contentStyle={{ backgroundColor: "rgba(0, 0, 0, 0.8)", border: "1px solid rgba(255, 255, 255, 0.2)", borderRadius: "8px", color: "#fff" }} formatter={(v: any) => formatINR(Number(v))} />
+                <Bar dataKey="total" fill="url(#barFillHosp)" radius={[0, 4, 4, 0]} animationDuration={700} />
+                <ReferenceLine x={500000} stroke={VIBRANT_COLORS.green} strokeDasharray="6 6" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </div>
 
-      {/* Top Diagnoses - Horizontal Bar Chart */}
-      <div className="rounded-lg border bg-card p-4 animate-fade-in delay-400">
-        <h3 className="mb-3 font-medium text-foreground">Top Diagnoses by Amount</h3>
-        <ResponsiveContainer width="100%" height={240}>
-          <BarChart data={topDiagnoses} layout="vertical">
-            <defs>
-              <linearGradient id="barFillHosp" x1="0" x2="1" y1="0" y2="0">
-                <stop offset="0%" stopColor={VIBRANT_COLORS.orange} stopOpacity={0.8} />
-                <stop offset="100%" stopColor={VIBRANT_COLORS.red} stopOpacity={0.6} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" opacity={0.2} stroke="#e5e7eb" />
-            <XAxis
-              type="number"
-              tickFormatter={(v) => formatINR(v).replace("₹", "")}
-              tickLine={false}
-              stroke="#9ca3af"
-            />
-            <YAxis dataKey="name" type="category" tickLine={false} stroke="#9ca3af" width={80} />
-            <Tooltip content={<ChartTooltipContent formatter={(v: any) => formatINR(Number(v))} />} />
-            <Bar dataKey="total" fill="url(#barFillHosp)" radius={[0, 4, 4, 0]} animationDuration={700} />
-            <ReferenceLine x={500000} stroke={VIBRANT_COLORS.green} strokeDasharray="6 6" />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* Settlement Days Trend - Line Chart */}
-      <div className="rounded-lg border bg-card p-4 animate-fade-in delay-500">
-        <h3 className="mb-3 font-medium text-foreground">Avg Settlement Time (Days)</h3>
-        <ResponsiveContainer width="100%" height={240}>
-          <LineChart data={avgSettlementDays}>
-            <defs>
-              <linearGradient id="lineFill" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor={VIBRANT_COLORS.green} stopOpacity={0.3} />
-                <stop offset="100%" stopColor={VIBRANT_COLORS.green} stopOpacity={0.05} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" opacity={0.2} stroke="#e5e7eb" />
-            <XAxis dataKey="month" tickLine={false} stroke="#9ca3af" />
-            <YAxis allowDecimals={false} tickLine={false} stroke="#9ca3af" />
-            <Tooltip content={<ChartTooltipContent />} />
+      {/* Settlement Days Trend - Line Chart - Full Width */}
+      <div className="rounded-lg border bg-card p-6 shadow-sm hover:shadow-md transition-shadow animate-fade-in delay-500">
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">Average Settlement Timeline</h3>
+            <p className="text-sm text-muted-foreground mt-1">Days to settle claims by month</p>
+          </div>
+          <ResponsiveContainer width="100%" height={320}>
+            <LineChart data={avgSettlementDays}>
+              <defs>
+                <linearGradient id="lineFill" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stopColor={VIBRANT_COLORS.green} stopOpacity={0.3} />
+                  <stop offset="100%" stopColor={VIBRANT_COLORS.green} stopOpacity={0.05} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" opacity={0.2} stroke="#e5e7eb" />
+              <XAxis dataKey="month" tickLine={false} stroke="#9ca3af" />
+              <YAxis allowDecimals={false} tickLine={false} stroke="#9ca3af" />
+              <Tooltip contentStyle={{ backgroundColor: "rgba(0, 0, 0, 0.8)", border: "1px solid rgba(255, 255, 255, 0.2)", borderRadius: "8px", color: "#fff" }} />
             <Line
               type="monotone"
               dataKey="avgDays"
@@ -340,31 +380,70 @@ export function AnalyticsCharts({ claims }: { claims: Claim[] }) {
               activeDot={{ r: 6 }}
               animationDuration={600}
             />
-            <ReferenceLine y={15} stroke={VIBRANT_COLORS.orange} strokeDasharray="6 6" label="Target" />
-            <Brush height={16} travellerWidth={8} fill={VIBRANT_COLORS.green} />
-          </LineChart>
-        </ResponsiveContainer>
+              <ReferenceLine y={15} stroke={VIBRANT_COLORS.orange} strokeDasharray="6 6" label="Target" />
+              <Brush height={16} travellerWidth={8} fill={VIBRANT_COLORS.green} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
-      {/* Amount Distribution - Bar Chart */}
-      <div className="rounded-lg border bg-card p-4 animate-fade-in delay-700">
-        <h3 className="mb-3 font-medium text-foreground">Amount Distribution</h3>
-        <ResponsiveContainer width="100%" height={240}>
-          <BarChart data={amountBuckets}>
-            <defs>
-              <linearGradient id="amountFill" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor={VIBRANT_COLORS.purple} stopOpacity={0.8} />
-                <stop offset="100%" stopColor={VIBRANT_COLORS.pink} stopOpacity={0.6} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" opacity={0.2} stroke="#e5e7eb" />
-            <XAxis dataKey="bucket" tickLine={false} stroke="#9ca3af" />
-            <YAxis allowDecimals={false} tickLine={false} stroke="#9ca3af" />
-            <Tooltip content={<ChartTooltipContent />} />
-            <Bar dataKey="count" fill="url(#amountFill)" radius={[4, 4, 0, 0]} animationDuration={700} />
-            <Brush height={16} travellerWidth={8} fill={VIBRANT_COLORS.purple} />
-          </BarChart>
-        </ResponsiveContainer>
+      {/* Two-Column Section for Amount Distribution and Top Hospitals */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Amount Distribution - Bar Chart */}
+        <div className="rounded-lg border bg-card p-6 shadow-sm hover:shadow-md transition-shadow animate-fade-in delay-700">
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-lg font-semibold text-foreground">Amount Distribution</h3>
+              <p className="text-sm text-muted-foreground mt-1">Claims grouped by amount range</p>
+            </div>
+            <ResponsiveContainer width="100%" height={320}>
+              <BarChart data={amountBuckets}>
+                <defs>
+                  <linearGradient id="amountFill" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stopColor={VIBRANT_COLORS.purple} stopOpacity={0.8} />
+                    <stop offset="100%" stopColor={VIBRANT_COLORS.pink} stopOpacity={0.6} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.2} stroke="#e5e7eb" />
+                <XAxis dataKey="bucket" tickLine={false} stroke="#9ca3af" />
+                <YAxis allowDecimals={false} tickLine={false} stroke="#9ca3af" />
+                <Tooltip contentStyle={{ backgroundColor: "rgba(0, 0, 0, 0.8)", border: "1px solid rgba(255, 255, 255, 0.2)", borderRadius: "8px", color: "#fff" }} />
+                <Bar dataKey="count" fill="url(#amountFill)" radius={[4, 4, 0, 0]} animationDuration={700} />
+                <Brush height={16} travellerWidth={8} fill={VIBRANT_COLORS.purple} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Top Hospitals - Bar Chart */}
+        <div className="rounded-lg border bg-card p-6 shadow-sm hover:shadow-md transition-shadow animate-fade-in delay-800">
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-lg font-semibold text-foreground">Top Healthcare Providers</h3>
+              <p className="text-sm text-muted-foreground mt-1">Claims by facility</p>
+            </div>
+            <ResponsiveContainer width="100%" height={320}>
+              <BarChart data={topHospitals}>
+                <defs>
+                  <linearGradient id="hospFill" x1="0" x2="1" y1="0" y2="0">
+                    <stop offset="0%" stopColor={VIBRANT_COLORS.cyan} stopOpacity={0.8} />
+                    <stop offset="100%" stopColor={VIBRANT_COLORS.teal} stopOpacity={0.6} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.2} stroke="#e5e7eb" />
+                <XAxis
+                  type="number"
+                  tickFormatter={(v) => formatINR(v).replace("₹", "")}
+                  tickLine={false}
+                  stroke="#9ca3af"
+                />
+                <YAxis dataKey="name" type="category" tickLine={false} stroke="#9ca3af" width={100} />
+                <Tooltip contentStyle={{ backgroundColor: "rgba(0, 0, 0, 0.8)", border: "1px solid rgba(255, 255, 255, 0.2)", borderRadius: "8px", color: "#fff" }} formatter={(v: any) => formatINR(Number(v))} />
+                <Bar dataKey="total" fill="url(#hospFill)" radius={[0, 4, 4, 0]} animationDuration={700} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </div>
     </div>
   )

@@ -27,10 +27,10 @@ const claimsData = [
 ]
 
 const statusData = [
-  { name: "Approved", value: 58, fill: "hsl(var(--chart-3))" },
-  { name: "Under Review", value: 25, fill: "hsl(var(--chart-4))" },
-  { name: "Rejected", value: 9, fill: "hsl(var(--chart-5))" },
-  { name: "Submitted", value: 8, fill: "hsl(var(--chart-2))" },
+  { name: "Approved", value: 58, fill: "#10B981" },
+  { name: "Under Review", value: 25, fill: "#F59E0B" },
+  { name: "Rejected", value: 9, fill: "#EF4444" },
+  { name: "Submitted", value: 8, fill: "#00D9FF" },
 ]
 
 const regionData = [
@@ -43,8 +43,8 @@ const regionData = [
 
 export function ClaimsAnalytics() {
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="space-y-8 py-6 px-2">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="bg-white border border-border">
           <CardHeader>
             <CardTitle className="text-lg font-semibold">Claims Trend</CardTitle>
@@ -57,9 +57,9 @@ export function ClaimsAnalytics() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="submitted" stroke="hsl(var(--chart-1))" strokeWidth={2} />
-                <Line type="monotone" dataKey="approved" stroke="hsl(var(--chart-3))" strokeWidth={2} />
-                <Line type="monotone" dataKey="rejected" stroke="hsl(var(--chart-5))" strokeWidth={2} />
+                <Line type="monotone" dataKey="submitted" stroke="#0066FF" strokeWidth={2} name="Submitted" />
+                <Line type="monotone" dataKey="approved" stroke="#10B981" strokeWidth={2} name="Approved" />
+                <Line type="monotone" dataKey="rejected" stroke="#EF4444" strokeWidth={2} name="Rejected" />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
@@ -105,8 +105,8 @@ export function ClaimsAnalytics() {
               <YAxis />
               <Tooltip />
               <Legend />
-              <Bar dataKey="claims" fill="hsl(var(--chart-1))" />
-              <Bar dataKey="approved" fill="hsl(var(--chart-3))" />
+              <Bar dataKey="claims" fill="#0066FF" name="Total Claims" />
+              <Bar dataKey="approved" fill="#10B981" name="Approved" />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>
