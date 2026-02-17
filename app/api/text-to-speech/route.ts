@@ -1,10 +1,6 @@
 import { ElevenLabsClient } from "elevenlabs"
 import type { NextRequest } from "next/server"
 
-const client = new ElevenLabsClient({
-  apiKey: process.env.ELEVENLABS_API_KEY,
-})
-
 export async function POST(request: NextRequest) {
   try {
     const { text, voiceId = "JBFqnCBsd6RMkjVDRZzb", model = "eleven_multilingual_v2" } = await request.json()
@@ -16,6 +12,11 @@ export async function POST(request: NextRequest) {
     if (!process.env.ELEVENLABS_API_KEY) {
       return new Response(JSON.stringify({ error: "ElevenLabs API key not configured" }), { status: 500 })
     }
+
+    // Initialize client only when request is made (not at module load time)
+    const client = new ElevenLabsClient({
+      apiKey: process.env.ELEVENLABS_API_KEY,
+    })
 
     console.log("[v0] Generating audio for text:", text.substring(0, 50))
 

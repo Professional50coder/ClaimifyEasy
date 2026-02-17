@@ -73,7 +73,8 @@ export default async function ClaimsPage() {
         </div>
 
         {user.role !== "patient" && (
-          <div className="mb-8">
+          <div className="mb-12 bg-white dark:bg-slate-900 rounded-lg border border-border p-6 md:p-8">
+            <h2 className="text-xl font-semibold mb-6 text-foreground">Claims Analytics</h2>
             <ClaimsAnalytics />
           </div>
         )}

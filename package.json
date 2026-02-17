@@ -9,6 +9,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@google-cloud/storage": "^7.0.0",
     "@ai-sdk/google": "latest",
     "@ai-sdk/react": "latest",
     "@ai-sdk/xai": "latest",

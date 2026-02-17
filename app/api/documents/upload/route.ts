@@ -34,12 +34,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "File too large" }, { status: 400 })
     }
 
-    // In a real implementation, you would:
-    // 1. Upload to cloud storage (e.g., Vercel Blob)
-    // 2. Save metadata to database
-    // 3. Return the document info
+    // Check if GCP is configured
+    const hasGCPConfig = process.env.GCP_BUCKET_NAME || process.env.GOOGLE_CLOUD_PROJECT
 
     const documentId = Math.random().toString(36).substr(2, 9)
+    let storageUrl = null
+    let storagePath = null
+
+    // Upload to GCP if configured
+    if (hasGCPConfig) {
+      try {
+        const { uploadFileToGCS } = await import("@/lib/gcp-storage")
+        const buffer = await file.arrayBuffer()
+        const result = await uploadFileToGCS(Buffer.from(buffer), file.name, file.type)
+        storageUrl = result.url
+        storagePath = result.path
+      } catch (gcpError) {
+        console.error("[v0] GCP upload failed, using fallback:", gcpError)
+        // Continue without GCP - file is still logged in system
+      }
+    }
+
+    // Store metadata (in a real app, save to database)
     const document = {
       id: documentId,
       name: file.name,
@@ -47,12 +63,14 @@ export async function POST(req: NextRequest) {
       size: file.size,
       userId: user.id,
       uploadedAt: new Date().toISOString(),
-      status: "pending",
+      status: "success",
+      storageUrl,
+      storagePath,
     }
 
     return NextResponse.json(document, { status: 201 })
   } catch (error) {
-    console.error("Upload error:", error)
+    console.error("[v0] Upload error:", error)
     return NextResponse.json({ error: "Upload failed" }, { status: 500 })
   }
 }

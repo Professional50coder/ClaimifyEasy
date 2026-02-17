@@ -82,10 +82,33 @@ export function DocumentUpload() {
       }
       newFiles.push(uploadedFile)
 
-      // Simulate upload delay
-      setTimeout(() => {
-        setFiles((prev) => prev.map((f) => (f.id === uploadedFile.id ? { ...f, status: "success" } : f)))
-      }, 1500)
+      // Upload to server
+      const formData = new FormData()
+      formData.append("file", file)
+
+      try {
+        const response = await fetch("/api/documents/upload", {
+          method: "POST",
+          body: formData,
+        })
+
+        if (response.ok) {
+          setFiles((prev) => prev.map((f) => (f.id === uploadedFile.id ? { ...f, status: "success" } : f)))
+        } else {
+          const error = await response.json()
+          setFiles((prev) =>
+            prev.map((f) =>
+              f.id === uploadedFile.id ? { ...f, status: "error", error: error.error || "Upload failed" } : f,
+            ),
+          )
+        }
+      } catch (error) {
+        setFiles((prev) =>
+          prev.map((f) =>
+            f.id === uploadedFile.id ? { ...f, status: "error", error: "Network error" } : f,
+          ),
+        )
+      }
     }
 
     setFiles((prev) => [...prev, ...newFiles])

@@ -1,5 +1,6 @@
 import { generateText } from "ai"
 import { xai } from "@ai-sdk/xai"
+import { buildRAGContext } from "@/lib/rag-retriever"
 
 interface ExplainableResponse {
   role: string
@@ -21,33 +22,44 @@ export async function POST(request: Request) {
 
     const lastMessage = messages[messages.length - 1]?.content || ""
 
+    // Build RAG context from claims and documents
+    const ragContext = buildRAGContext(lastMessage)
+
     const systemPrompt = explainable
-      ? `You are a helpful assistant for ClaimifyEasy, a medical insurance claims management platform.
+      ? `You are an expert AI assistant for ClaimifyEasy, a medical insurance claims management platform.
 You help users with:
-- Claim status inquiries
-- Policy information
+- Claim status inquiries and tracking
+- Policy information and coverage details
 - General questions about the platform
 - Guidance on submitting claims
-- Settlement timelines
+- Settlement timelines and processes
+- Document analysis and recommendations
+
+RAG CONTEXT - USE THIS DATA TO ANSWER QUESTIONS:
+${ragContext}
 
 IMPORTANT: When answering, structure your response as follows:
 1. Start with your main answer/recommendation
 2. Then provide a "Reasoning:" section explaining your logic step-by-step
-3. Include any key data points or assumptions you used
+3. Include any key data points or assumptions you used from the context above
 4. End with a confidence level (HIGH/MEDIUM/LOW)
 
 This helps users understand how you arrived at your conclusion.
 
-Be concise, friendly, and professional. If you don't know something, suggest contacting support.`
-      : `You are a helpful assistant for ClaimifyEasy, a medical insurance claims management platform. 
+Be concise, friendly, and professional. Reference specific claim data when available. If you don't know something, suggest contacting support.`
+      : `You are an expert AI assistant for ClaimifyEasy, a medical insurance claims management platform. 
 You help users with:
-- Claim status inquiries
-- Policy information
+- Claim status inquiries and tracking
+- Policy information and coverage details
 - General questions about the platform
 - Guidance on submitting claims
-- Settlement timelines
+- Settlement timelines and processes
+- Document analysis and recommendations
 
-Be concise, friendly, and professional. If you don't know something, suggest contacting support.`
+RAG CONTEXT - USE THIS DATA TO ANSWER QUESTIONS:
+${ragContext}
+
+Be concise, friendly, and professional. Reference specific claim data when available. If you don't know something, suggest contacting support.`
 
     const { text } = await generateText({
       model: xai("grok-4", {
