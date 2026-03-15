@@ -8,6 +8,7 @@ import { Sidebar } from "@/components/sidebar"
 import { KPICard } from "@/components/kpi-card"
 import { GaugeChart } from "@/components/gauge-chart"
 import { LazySection } from "@/components/lazy-section"
+import { WorkflowOverview } from "@/components/workflow-overview"
 import { Users, FileCheck, AlertCircle } from "lucide-react"
 
 export default async function DashboardPage() {
@@ -120,6 +121,10 @@ export default async function DashboardPage() {
         </div>
 
         <LazySection delay={600} className="mt-6">
+          <WorkflowOverview />
+        </LazySection>
+
+        <LazySection delay={700} className="mt-6">
           <Card>
             <CardHeader>
               <CardTitle>Quick Actions</CardTitle>

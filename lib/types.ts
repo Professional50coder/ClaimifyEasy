@@ -71,3 +71,69 @@ export interface SmartContract {
   createdAt: number
   updatedAt: number
 }
+
+// ============ WORKFLOW TYPES ============
+
+export type WorkflowStage = "document_processing" | "fraud_analysis" | "claims_processing"
+export type WorkflowStatus = "pending" | "processing" | "completed" | "failed"
+
+export interface FraudAnalysisResult {
+  fraudScore: number // 0-100
+  riskLevel: "low" | "medium" | "high" | "critical"
+  detectedFlags: string[]
+  confidence: number // 0-1
+  reasoning: string
+  explainability: {
+    keyFactors: string[]
+    dataPoints: Record<string, unknown>
+  }
+}
+
+export interface ClaimsProcessingResult {
+  approvalPercentage: number // 0-100
+  decision: "approved" | "denied" | "under_review"
+  reasoning: string
+  approvalAmount: number
+  decisionDetails: {
+    businessRulesApplied: string[]
+    policyEligibility: boolean
+    claimAmountValidation: boolean
+    reviewRequired: boolean
+  }
+}
+
+export interface WorkflowStageExecution {
+  stage: WorkflowStage
+  status: WorkflowStatus
+  startedAt: number
+  completedAt?: number
+  error?: string
+  output?: Record<string, unknown>
+}
+
+export interface WorkflowExecution {
+  id: string
+  claimId: string
+  status: "pending" | "in_progress" | "completed" | "failed"
+  currentStage: WorkflowStage
+  stages: WorkflowStageExecution[]
+  documentProcessingOutput?: {
+    claimantInfo: Record<string, unknown>
+    incidentDetails: Record<string, unknown>
+    claimsAmounts: Record<string, unknown>
+  }
+  fraudAnalysisResult?: FraudAnalysisResult
+  claimsProcessingResult?: ClaimsProcessingResult
+  startedAt: number
+  completedAt?: number
+  createdAt: number
+  updatedAt: number
+}
+
+export interface WorkflowOutput {
+  executionId: string
+  claimId: string
+  stage: WorkflowStage
+  output: Record<string, unknown>
+  timestamp: number
+}
