@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Sidebar } from "@/components/sidebar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -12,7 +12,7 @@ interface Message {
   id: string
   sender: string
   content: string
-  timestamp: Date
+  timestamp: number
   isOwn: boolean
 }
 
@@ -22,18 +22,23 @@ export default function MessagesPage() {
       id: "1",
       sender: "Support Team",
       content: "Hello! How can we help you today?",
-      timestamp: new Date(Date.now() - 3600000),
+      timestamp: Date.now() - 3600000,
       isOwn: false,
     },
     {
       id: "2",
       sender: "You",
       content: "I have a question about my claim status",
-      timestamp: new Date(Date.now() - 3000000),
+      timestamp: Date.now() - 3000000,
       isOwn: true,
     },
   ])
   const [input, setInput] = useState("")
+  const [hydrated, setHydrated] = useState(false)
+
+  useEffect(() => {
+    setHydrated(true)
+  }, [])
 
   const handleSend = () => {
     if (!input.trim()) return
@@ -42,7 +47,7 @@ export default function MessagesPage() {
       id: Date.now().toString(),
       sender: "You",
       content: input,
-      timestamp: new Date(),
+      timestamp: Date.now(),
       isOwn: true,
     }
 
@@ -57,11 +62,18 @@ export default function MessagesPage() {
           id: (Date.now() + 1).toString(),
           sender: "Support Team",
           content: "Thank you for your message. We'll get back to you shortly.",
-          timestamp: new Date(),
+          timestamp: Date.now(),
           isOwn: false,
         },
       ])
     }, 1000)
+  }
+
+  const formatTime = (timestamp: number) => {
+    const date = new Date(timestamp)
+    const hours = date.getHours().toString().padStart(2, "0")
+    const minutes = date.getMinutes().toString().padStart(2, "0")
+    return `${hours}:${minutes}`
   }
 
   return (
@@ -121,7 +133,7 @@ export default function MessagesPage() {
                       }`}
                     >
                       <p className="text-sm">{msg.content}</p>
-                      <p className="text-xs opacity-70 mt-1">{msg.timestamp.toLocaleTimeString()}</p>
+                      <p className="text-xs opacity-70 mt-1">{formatTime(msg.timestamp)}</p>
                     </div>
                   </div>
                 ))}
