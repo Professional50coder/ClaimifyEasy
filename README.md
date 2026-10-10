@@ -1,5 +1,7 @@
 # ClaimifyEasy: Medical Insurance Claims SaaS
 
+[![CI](https://github.com/Professional50coder/ClaimifyEasy/actions/workflows/ci.yml/badge.svg)](https://github.com/Professional50coder/ClaimifyEasy/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) ![Next.js 15](https://img.shields.io/badge/Next.js-15-black) ![Status: prototype](https://img.shields.io/badge/status-prototype-orange)
+
 [![Ask DeepWiki](https://devin.ai/assets/askdeepwiki.png)](https://deepwiki.com/Professional50coder/ClaimifyEasy)
 
 One workspace where patients, hospitals, insurers and admins move a medical insurance claim from submission to settlement.
@@ -9,6 +11,27 @@ One workspace where patients, hospitals, insurers and admins move a medical insu
 | **Live app** | https://claimifyeasy-bice.vercel.app/ |
 | **Source** | https://github.com/Professional50coder/ClaimifyEasy |
 | **Docs (generated)** | https://deepwiki.com/Professional50coder/ClaimifyEasy |
+
+> **Prototype / portfolio project.** Not an insurer, not a regulated product, and not insurance, medical or legal advice. Coverage figures come from illustrative rates, and AI output is advisory only. Do not enter real patient data.
+
+**See it work in 30 seconds (no API keys):**
+
+```bash
+pnpm install
+pnpm test    # 19 tests
+pnpm demo    # claim lifecycle, coverage estimate, retriever; output below
+```
+
+```text
+insurer approve   -> REFUSED: Hospital verification required before approval
+hospital verify   -> under_review
+admin settle      -> REFUSED: Only approved claims can be settled
+insurer approve   -> approved
+admin settle      -> settled
+insurer reject    -> REFUSED: Only open claims can be rejected
+```
+
+Full captured output, including the coverage estimate (85,000 surgery on a "standard" policy, 5,000 deductible, 20% coinsurance -> 44,800 insurer share): [`docs/sample-output.txt`](docs/sample-output.txt).
 
 **At a glance**
 
@@ -213,7 +236,9 @@ This is a prototype. Do not put real patient data in it.
 - **Data is ephemeral.** Claims, documents, contracts and workflow executions live in process memory.
 - **Blockchain is simulated in the app.** `ZKPVerifier._performZKVerification` is a placeholder that only checks the hash is non-zero.
 - **AI output is advisory.** Fraud scores and decisions come from a general-purpose LLM, not a trained fraud model. Treat them as a first pass for a human reviewer.
-- **Build checks are off.** `next.config.mjs` sets `ignoreBuildErrors` and `ignoreDuringBuilds`; `tsc-out.txt` records outstanding type errors.
+- **Build checks are off.** `next.config.mjs` sets `ignoreBuildErrors` and `ignoreDuringBuilds`; run `pnpm typecheck` to see outstanding type errors (the dependency install resolves most module-not-found errors that an older `tsc-out.txt` once recorded).
+- **Several API routes are unauthenticated.** `/api/chat`, `/api/text-to-speech` and `/api/workflow/*` do not call `getCurrentUser`, and the chat retriever injects claim summaries from the whole store regardless of who asks. Only `/api/documents`, `/api/documents/upload` and `/api/auth/check` check the session.
+- **Not financial or medical advice.** The coverage calculator uses fixed illustrative rates (`lib/coverage-calc.ts`), not real policy terms. Nothing here implies regulatory approval or a guaranteed claim outcome.
 - **Secrets.** API keys are read from environment variables only. `.env*.local` is git-ignored.
 
 ## Where it stands
@@ -222,7 +247,7 @@ This is a prototype. Do not put real patient data in it.
 - The role-based claim lifecycle, analytics, contract screens, chat, TTS, upload and coverage calculator are implemented against the in-memory store.
 - The agent workflow API is implemented; the `/workflow` page and claim detail tabs currently render sample data rather than calling it.
 - The Solidity contracts, deploy scripts (local, Sepolia) and tests are present, but the repo has no `hardhat.config` and Hardhat, OpenZeppelin and Chainlink are not in `package.json`, so they do not run as checked in.
-- Extended notes on individual integrations live in the root `*.md` files (start with `DOCUMENTATION_INDEX.md`, `QUICK_START.md`, `GCP_SETUP.md`, `ELEVENLABS_INTEGRATION.md`, `RAG_CHATBOT.md`, `WORKFLOW_INTEGRATION_GUIDE.md`, `COVERAGE_CALCULATOR_GUIDE.md`, `TEST_SCENARIOS.md`).
+- Extended notes on individual integrations live in the root `*.md` files (start with `QUICK_START.md`, `GCP_SETUP.md`, `ELEVENLABS_INTEGRATION.md`, `RAG_CHATBOT.md`, `WORKFLOW_INTEGRATION_GUIDE.md`, `COVERAGE_CALCULATOR_GUIDE.md`, `TEST_SCENARIOS.md`).
 
 ## Tech stack
 
@@ -259,9 +284,12 @@ lib/
   sample-data.ts        Sample data generators and smart contract code examples
   workflow-*.ts         Agent pipeline
   rag-retriever.ts      Context retrieval for chat
-  coverage-agents.ts    Coverage rules and calculator
+  coverage-calc.ts      Pure coverage calculator (tested)
+  coverage-agents.ts    Unused OpenAI analysis function; re-exports the calculator
   gcp-storage.ts        Google Cloud Storage client
   integration-tests.ts  Integration checks
+tests/                  Vitest suites (app logic)
+docs/                   Captured sample output
 hooks/                  Custom hooks (use-toast, use-text-to-speech, use-mobile)
 contracts/              Solidity contracts
 scripts/                Hardhat deploy and verify scripts
@@ -286,7 +314,7 @@ public/                 Static assets and landing-page images
    ```bash
    pnpm install
    ```
-4. (Optional) Create `.env.local` for AI, voice and storage:
+4. (Optional) Copy `.env.example` to `.env.local` and fill in keys for AI, voice and storage:
    ```bash
    XAI_API_KEY=your_xai_key_here
    ELEVENLABS_API_KEY=your_elevenlabs_key_here
@@ -302,11 +330,26 @@ public/                 Static assets and landing-page images
 
 Open [http://localhost:3000](http://localhost:3000). `/` redirects to `/dashboard` when signed in.
 
-Other scripts: `pnpm build`, `pnpm start`, `pnpm lint`.
+Other scripts: `pnpm build`, `pnpm start`, `pnpm lint`, `pnpm test`, `pnpm demo`, `pnpm typecheck`.
 
 ## Testing
 
-- **App:** there is no automated test runner in `package.json`. `/admin/integrations` runs live checks for environment, chat, explainable chat and TTS. Manual scenarios are in `TEST_SCENARIOS.md` and `VERIFICATION_CHECKLIST.md`.
+```bash
+pnpm test        # vitest, 19 tests, no network or keys
+pnpm demo        # prints docs/sample-output.txt
+pnpm build       # Next.js production build
+```
+
+| Suite | Covers |
+|---|---|
+| `tests/claims-workflow.test.ts` | Validation, duplicate detection, role checks, no approval before verification, no settlement before approval, terminal states cannot be re-opened, audit entries |
+| `tests/coverage-calc.test.ts` | Hand-computed example, `coverage + patient responsibility = cost` invariant, policy limit cap, deductible above cost, fallbacks for unknown inputs |
+| `tests/rag-retriever.test.ts` | Jaccard similarity, retrieval over seeded claims and documents does not throw, empty-match fallback |
+
+Against the previous code these tests fail (7 failures): the chat retriever threw on every query once claims existed, and `createClaim` threw on a missing diagnosis. CI (`.github/workflows/ci.yml`) runs tests and the build on every push and pull request.
+
+Not covered by automated tests: the React UI, the AI routes (they need live keys; use `/admin/integrations`), and the Solidity contracts (see below). Manual scenarios are in `TEST_SCENARIOS.md` and `VERIFICATION_CHECKLIST.md`.
+
 - **Contracts:** `test/EscrowContract.test.js` and `test/MedicalInsuranceCore.test.js` are Hardhat/chai tests. To run them you need to add a Hardhat config and install `hardhat`, `@nomicfoundation/hardhat-toolbox` (or ethers + chai), `@openzeppelin/contracts` and `@chainlink/contracts`, then run `npx hardhat test`.
 
 ## Deploying
@@ -325,3 +368,7 @@ Grounded in the gaps above:
 - Replace the ZK verifier placeholder with real proof verification.
 - Use the 10,000-claim dataset for analytics and to evaluate the fraud agent.
 - Re-enable TypeScript and ESLint checks in builds.
+
+## License
+
+[MIT](LICENSE) (c) 2026 Hitansh Gopani.
