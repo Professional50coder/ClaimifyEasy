@@ -5,7 +5,7 @@ import { Sidebar } from '@/components/sidebar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CoverageCalculatorForm } from '@/components/coverage-calculator-form'
 import { CoverageResults } from '@/components/coverage-results'
-import { calculateBasicCoverage } from '@/lib/coverage-agents'
+import { calculateBasicCoverage } from '@/lib/coverage-calc'
 import { LazySection } from '@/components/lazy-section'
 import { AlertCircle, HelpCircle, Lightbulb } from 'lucide-react'
 

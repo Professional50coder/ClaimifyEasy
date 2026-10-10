@@ -1,7 +1,8 @@
 import { db } from "./db"
 
-// Simple cosine similarity calculation for vector-like search
-function calculateSimilarity(query: string, text: string): number {
+// Word-overlap (Jaccard) similarity; no embeddings involved
+export function calculateSimilarity(query: string, text: string): number {
+  if (!query || !text) return 0
   const queryWords = query.toLowerCase().split(/\s+/)
   const textWords = text.toLowerCase().split(/\s+/)
 
@@ -27,7 +28,7 @@ export function getClaimsContext(query: string, limit: number = 3): string {
       score:
         calculateSimilarity(query, claim.diagnosis) +
         calculateSimilarity(query, claim.status) +
-        calculateSimilarity(query, claim.hospital) * 0.5,
+        calculateSimilarity(query, claim.notes ?? "") * 0.5,
     }))
     .filter((item) => item.score > 0)
     .sort((a, b) => b.score - a.score)
@@ -43,7 +44,7 @@ export function getClaimsContext(query: string, limit: number = 3): string {
       const claim = item.claim
       return `Claim ${claim.id}:
 - Diagnosis: ${claim.diagnosis}
-- Hospital: ${claim.hospital}
+- Notes: ${claim.notes ?? "n/a"}
 - Amount: ₹${claim.amount.toLocaleString("en-IN")}
 - Status: ${claim.status}
 - Submitted: ${new Date(claim.createdAt).toLocaleDateString("en-IN")}`
@@ -63,7 +64,7 @@ export function getDocumentsContext(query: string, limit: number = 2): string {
   const scoredDocs = db.docs
     .map((doc) => ({
       doc,
-      score: calculateSimilarity(query, doc.name) + calculateSimilarity(query, doc.summary || ""),
+      score: calculateSimilarity(query, doc.filename) + calculateSimilarity(query, doc.mimeType),
     }))
     .filter((item) => item.score > 0)
     .sort((a, b) => b.score - a.score)
@@ -77,11 +78,10 @@ export function getDocumentsContext(query: string, limit: number = 2): string {
   const context = scoredDocs
     .map((item) => {
       const doc = item.doc
-      return `Document: ${doc.name}
-- Type: ${doc.type}
-- Size: ${(doc.size / 1024).toFixed(2)} KB
-- Summary: ${doc.summary || "No summary available"}
-- Uploaded: ${new Date(doc.uploadedAt).toLocaleDateString("en-IN")}`
+      return `Document: ${doc.filename}
+- Type: ${doc.mimeType}
+- Size: ${(doc.data.byteLength / 1024).toFixed(2)} KB
+- Uploaded: ${new Date(doc.createdAt).toLocaleDateString("en-IN")}`
     })
     .join("\n\n")
 
@@ -132,7 +132,7 @@ export function getUserClaimsContext(userId: string, query: string): string {
       score:
         calculateSimilarity(query, claim.diagnosis) +
         calculateSimilarity(query, claim.status) +
-        calculateSimilarity(query, claim.hospital) * 0.5,
+        calculateSimilarity(query, claim.notes ?? "") * 0.5,
     }))
     .filter((item) => item.score > 0)
     .sort((a, b) => b.score - a.score)
@@ -147,7 +147,7 @@ export function getUserClaimsContext(userId: string, query: string): string {
       const claim = item.claim
       return `Claim Status: ${claim.status}
 - Diagnosis: ${claim.diagnosis}
-- Hospital: ${claim.hospital}
+- Notes: ${claim.notes ?? "n/a"}
 - Amount Claimed: ₹${claim.amount.toLocaleString("en-IN")}
 - Days in System: ${Math.floor((Date.now() - claim.createdAt) / (1000 * 60 * 60 * 24))}`
     })

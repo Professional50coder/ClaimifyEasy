@@ -223,6 +223,11 @@ export function createClaim(params: {
   notes?: string
   documentFiles?: { filename: string; mimeType: string; data: Uint8Array }[]
 }) {
+  // basic validation
+  if (!params.diagnosis || !params.amount || params.amount <= 0) {
+    return { error: "Missing or invalid data. Please provide diagnosis and a positive amount." as const }
+  }
+
   // simple duplicate detection: same patient + diagnosis within 30 days
   const THIRTY_DAYS = 1000 * 60 * 60 * 24 * 30
   const duplicate = db.claims.find(
@@ -233,11 +238,6 @@ export function createClaim(params: {
   )
   if (duplicate) {
     return { error: "Possible duplicate claim detected within 30 days for same diagnosis." as const }
-  }
-
-  // basic validation
-  if (!params.diagnosis || !params.amount || params.amount <= 0) {
-    return { error: "Missing or invalid data. Please provide diagnosis and a positive amount." as const }
   }
 
   const id = randomId()
@@ -292,6 +292,7 @@ export function transitionClaimStatus(params: {
   switch (params.action) {
     case "verify":
       if (params.actor.role !== "hospital") return { error: "Only Hospital can verify" as const }
+      if (claim.status !== "submitted") return { error: "Only submitted claims can be verified" as const }
       claim.hospitalVerified = true
       claim.status = "under_review"
       claim.updatedAt = now()
@@ -308,6 +309,7 @@ export function transitionClaimStatus(params: {
     case "approve":
       if (params.actor.role !== "insurer") return { error: "Only Insurer can approve" as const }
       if (!claim.hospitalVerified) return { error: "Hospital verification required before approval" as const }
+      if (claim.status !== "under_review") return { error: "Only claims under review can be approved" as const }
       claim.status = "approved"
       claim.insurerDecision = "approved"
       claim.updatedAt = now()
@@ -316,6 +318,8 @@ export function transitionClaimStatus(params: {
       break
     case "reject":
       if (params.actor.role !== "insurer") return { error: "Only Insurer can reject" as const }
+      if (claim.status !== "under_review" && claim.status !== "submitted")
+        return { error: "Only open claims can be rejected" as const }
       claim.status = "rejected"
       claim.insurerDecision = "rejected"
       claim.updatedAt = now()
