@@ -6,7 +6,10 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "demo": "vite-node scripts/demo.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "latest",
@@ -76,6 +79,8 @@
     "postcss": "^8.5",
     "tailwindcss": "^4.1.9",
     "tw-animate-css": "1.3.3",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vite-node": "^2",
+    "vitest": "^2"
   }
 }

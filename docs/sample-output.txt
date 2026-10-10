@@ -1,0 +1,39 @@
+== 1. Claim lifecycle (patient -> hospital -> insurer -> admin) ==
+submit            -> submitted
+insurer approve   -> REFUSED: Hospital verification required before approval
+hospital verify   -> under_review
+admin settle      -> REFUSED: Only approved claims can be settled
+insurer approve   -> approved
+admin settle      -> settled
+insurer reject    -> REFUSED: Only open claims can be rejected
+duplicate submit  -> REFUSED: Possible duplicate claim detected within 30 days for same diagnosis.
+
+audit trail for this claim:
+  CLAIM_SUBMITTED  by patient
+  CLAIM_VERIFIED   by hospital
+  CLAIM_APPROVED   by insurer
+  CLAIM_SETTLED    by admin
+
+== 2. Coverage estimate (rule-based, illustrative rates) ==
+input : {"diagnosis":"Appendicitis","treatmentType":"surgery","estimatedCost":85000,"policyType":"standard","policyDetails":{"deductible":5000,"maxLimit":500000,"coinsurance":20}}
+output: {
+  "coverageAmount": 44800,
+  "patientResponsibility": 40200,
+  "breakdown": {
+    "estimatedCost": 85000,
+    "treatmentCoverage": 85000,
+    "afterDeductible": 80000,
+    "coinsurancePatientShare": 16000,
+    "insuranceBase": 64000,
+    "policyAdjustment": 44800
+  }
+}
+
+== 3. Chat retrieval context (word-overlap, best match) ==
+query : "appendicitis (demo)"  (best match shown; seeded claims are random each run)
+Claim <uuid>:
+- Diagnosis: Appendicitis (demo)
+- Notes: n/a
+- Amount: ₹85,000
+- Status: settled
+- Submitted: <today>
